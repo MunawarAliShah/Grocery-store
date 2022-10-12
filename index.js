@@ -1,102 +1,133 @@
-//hosting for ready function
-{
-    ready()
+// SELECT ELEMENTS
+const productsEl = document.querySelector(".products");
+const cartItemsEl = document.querySelector(".cart-items");
+const subtotalEl = document.querySelector(".subtotal");
+const totalItemsInCartEl = document.querySelector(".total-items-in-cart");
+document.getElementsByClassName('btn-purchase')[0].addEventListener('click', purchaseClicked)
+// RENDER PRODUCTS
+function renderProdcuts() {
+  products.forEach((product) => {
+    productsEl.innerHTML += `
+            <div class="item">
+                <div class="item-container">
+                    <div class="item-img">
+                        <img src="${product.imgSrc}" alt="${product.name}">
+                    </div>
+                    <div class="desc">
+                        <h2>${product.name}</h2>
+                        <h2><small class="h2">Rs = </small>${product.price}</h2>
+                        <p>
+                            ${product.description}
+                        </p>
+                    </div>
+                    <div class="add-to-cart" onclick="addToCart(${product.id})">
+                        <img src="./images/bag-plus.png" alt="add to cart">
+                    </div>
+                </div>
+            </div>
+        `;
+  });
 }
+renderProdcuts();
 
-function ready() {
-    let removeCartItemButtons = document.getElementsByClassName('btn-danger')
-    for (let i = 0; i < removeCartItemButtons.length; i++) {
-        let button = removeCartItemButtons[i]
-        button.addEventListener('click', removeCartItem)
-    }
+// cart array
+let cart = JSON.parse(localStorage.getItem("CART")) || [];
+updateCart();
 
-    let quantityInputs = document.getElementsByClassName('cart-quantity-input')
-    for (let i = 0; i < quantityInputs.length; i++) {
-        let input = quantityInputs[i]
-        input.addEventListener('change', quantityChanged)
-    }
+// ADD TO CART
+function addToCart(id) {
+  // check if prodcut already exist in cart
+  if (cart.some((item) => item.id === id)) {
+    changeNumberOfUnits("plus", id);
+  } else {
+    const item = products.find((product) => product.id === id);
 
-    let addToCartButtons = document.getElementsByClassName('shop-item-button')
-    for (let i = 0; i < addToCartButtons.length; i++) {
-        let button = addToCartButtons[i]
-        button.addEventListener('click', addToCartClicked)
-    }
+    cart.push({
+      ...item,
+      numberOfUnits: 1,
+    });
+  }
 
-    document.getElementsByClassName('btn-purchase')[0].addEventListener('click', purchaseClicked)
+  updateCart();
 }
 
 function purchaseClicked() {
-    alert('Thank you for your purchase')
-    let cartItems = document.getElementsByClassName('cart-items')[0]
-    while (cartItems.hasChildNodes()) {
-        cartItems.removeChild(cartItems.firstChild)
-    }
-    updateCartTotal()
+  alert('Thank you for your purchase')
+}
+updateCart()
+
+// update cart
+function updateCart() {
+  renderCartItems();
+  renderSubtotal();
+
+  // save cart to local storage
+  localStorage.setItem("CART", JSON.stringify(cart));
 }
 
-function removeCartItem(event) {
-    let buttonClicked = event.target
-    buttonClicked.parentElement.parentElement.remove()
-    updateCartTotal()
+// calculate and render subtotal
+function renderSubtotal() {
+  let totalPrice = 0,
+    totalItems = 0;
+
+  cart.forEach((item) => {
+    totalPrice += item.price * item.numberOfUnits;
+    totalItems += item.numberOfUnits;
+  });
+
+  subtotalEl.innerHTML = `Subtotal (${totalItems} items): Rs =${totalPrice.toFixed(2)}`;
+  totalItemsInCartEl.innerHTML = totalItems;
+  updateCart()
 }
 
-function quantityChanged(event) {
-    let input = event.target
-    if (isNaN(input.value) || input.value <= 0) {
-        input.value = 1
-    }
-    updateCartTotal()
-}
-
-function addToCartClicked(event) {
-    let button = event.target
-    let shopItem = button.parentElement.parentElement
-    let title = shopItem.getElementsByClassName('shop-item-title')[0].innerText
-    let price = shopItem.getElementsByClassName('shop-item-price')[0].innerText
-    let imageSrc = shopItem.getElementsByClassName('shop-item-image')[0].src
-    addItemToCart(title, price, imageSrc)
-    updateCartTotal()
-}
-
-function addItemToCart(title, price, imageSrc) {
-    let cartRow = document.createElement('div')
-    cartRow.classList.add('cart-row')
-    let cartItems = document.getElementsByClassName('cart-items')[0]
-    let cartItemNames = cartItems.getElementsByClassName('cart-item-title')
-    for (let i = 0; i < cartItemNames.length; i++) {
-        if (cartItemNames[i].innerText == title) {
-            alert('This item is already added to the cart')
-            return
-        }
-    }
-    let cartRowContents = `
-        <div class="cart-item cart-column">
-            <img class="cart-item-image" src="${imageSrc}" width="100" height="100">
-            <span class="cart-item-title">${title}</span>
+// render cart items
+function renderCartItems() {
+  cartItemsEl.innerHTML = ""; // clear cart element
+  cart.forEach((item) => {
+    cartItemsEl.innerHTML += `
+        <div class="cart-item">
+            <div class="item-info" onclick="removeItemFromCart(${item.id})">
+                <img src="${item.imgSrc}" alt="${item.name}">
+                <h4>${item.name}</h4>
+            </div>
+            <div class="unit-price">
+                <small>Rs=</small>${item.price}
+            </div>
+            <div class="units">
+                <div class="btn minus" onclick="changeNumberOfUnits('minus', ${item.id})">-</div>
+                <div class="number">${item.numberOfUnits}</div>
+                <div class="btn plus" onclick="changeNumberOfUnits('plus', ${item.id})">+</div>           
+            </div>
         </div>
-        <span class="cart-price cart-column">${price}</span>
-        <div class="cart-quantity cart-column">
-            <input class="cart-quantity-input" type="number" value="1">
-            <button class="btn btn-danger" type="button">REMOVE</button>
-        </div>`
-    cartRow.innerHTML = cartRowContents
-    cartItems.append(cartRow)
-    cartRow.getElementsByClassName('btn-danger')[0].addEventListener('click', removeCartItem)
-    cartRow.getElementsByClassName('cart-quantity-input')[0].addEventListener('change', quantityChanged)
+      `;
+  });
 }
 
-function updateCartTotal() {
-    let cartItemContainer = document.getElementsByClassName('cart-items')[0]
-    let cartRows = cartItemContainer.getElementsByClassName('cart-row')
-    let total = 0
-    for (let i = 0; i < cartRows.length; i++) {
-        let cartRow = cartRows[i]
-        let priceElement = cartRow.getElementsByClassName('cart-price')[0]
-        let quantityElement = cartRow.getElementsByClassName('cart-quantity-input')[0]
-        let price = parseFloat(priceElement.innerText.replace('Rs ', ''))
-        let quantity = quantityElement.value
-        total = total + (price * quantity)
+// remove item from cart
+function removeItemFromCart(id) {
+  cart = cart.filter((item) => item.id !== id);
+
+  updateCart();
+}
+
+// change number of units for an item
+function changeNumberOfUnits(action, id) {
+  cart = cart.map((item) => {
+    let numberOfUnits = item.numberOfUnits;
+
+    if (item.id === id) {
+      if (action === "minus" && numberOfUnits > 1) {
+        numberOfUnits--;
+      } else if (action === "plus" && numberOfUnits < item.instock) {
+        numberOfUnits++;
+      }
     }
-    total = Math.round(total * 100) / 100
-    document.getElementsByClassName('cart-total-price')[0].innerText = 'Rs ' + total
+
+    return {
+      ...item,
+      numberOfUnits,
+    };
+  });
+
+  updateCart();
 }
