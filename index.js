@@ -21,7 +21,7 @@ function renderProdcuts() {
                         </p>
                     </div>
                     <div class="add-to-cart" onclick="addToCart(${product.id})">
-                        <img src="./images/bag-plus.png" alt="add to cart">
+                        <img src="./Images/bag-plus.png" alt="add to cart">
                     </div>
                 </div>
             </div>
