@@ -91,7 +91,7 @@ function renderCartItems() {
                 <h4>${item.name}</h4>
             </div>
             <div class="unit-price">
-                <small>Rs = </small>${item.price}
+                <small>Rs=</small>${item.price}
             </div>
             <div class="units">
                 <div class="btn minus" onclick="changeNumberOfUnits('minus', ${item.id})">-</div>
